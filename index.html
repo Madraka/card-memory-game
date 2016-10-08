@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko-kr">
+
+<head>
+<meta charset="utf-8">
+<title>Hello...</title>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+<link rel="stylesheet" href="./style.css">
+
+<!-- jQuery 3.1.1 -->
+<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+</head>
+
+<body>
+  <div class="container page">
+  
+    <div class="scores-container">
+      score: <span class="score">0</scpan>
+    </div>
+    
+    <hr>
+  
+    <div class="game-container">
+      <div class="grid-container"></div>
+      <div id="game" class="tile-container"></div>
+    </div>
+  
+    <hr>
+    
+    <div id="trailer"></div>
+    
+  </div>
+  
+  <!-- visionmedia/move.js v0.5.0 -->
+  <script src="./move.min.js"></script>
+
+  <script>
+  $(function(){
+    
+    var row=3, col=3, container=$("#game");
+    
+    var trail = {
+      list: [],
+      length: 9,
+      range: 9,
+      pivot: 7,
+      renderer: null,
+      
+      init: function(renderSelector){
+        this.renderer = $(renderSelector);
+        this.list = [];
+        this.current = this.pivot;
+        for(var i=0; i<this.length; ++i){
+          this.list.push(this.randomNumber());
+        }
+        return this;
+      },
+      
+      randomNumber: function(){
+        return Math.floor(Math.random()*this.range);
+      },
+      
+      render: function(){
+        var result = $('<div class="grid-row"></div>');
+        for(var i in this.list){
+          var currentPosition = '';
+          if(i == this.current) currentPosition = 'current-cell';
+          result.append('<div class="grid-cell trail-cell '+ currentPosition +'">'+ this.list[i] +'</div>');
+        }
+        this.renderer.html(result);
+      },
+      
+      isAnswer: function(number){
+        if(this.list.length < 1) return;
+        return this.list[this.current] == number;
+      },
+      
+      goFront: function(){
+        if(this.current < this.pivot){
+          this.movePosition(+1);
+        } else {
+          this.list.shift();
+          this.list.push(this.randomNumber());
+        }
+      },
+      goBack: function(){
+        this.list.shift();
+        this.list.push(this.randomNumber());
+        this.movePosition(-1);
+      },
+      
+      submitAndUpdate: function(number){
+        if( this.isAnswer(number) === true ){
+          this.goFront();
+        } else {
+          this.goBack();
+        }
+        this.render();
+      },
+      
+      movePosition: function(offset){
+        this.current += offset;
+        if( this.current < 0 ) this.die();
+      },
+      
+      die: function(){
+        alert('Game Over!');
+      }
+    };
+    
+    trail.init('#trailer').render();
+    
+    function init(){
+      for(var i=0; i<row; ++i){
+        for(var j=0; j<col; ++j){
+          closeCard('.tile-'+i+'-'+j, 0, 0);
+        }
+      }
+    }
+    setTimeout(init, 10);
+    
+    function openCardAndClose(el, delay, duration){
+      return move(el)
+        .delay(delay)
+        .duration(duration)
+        .scale(1, 1)
+        .set('opacity', 1)
+        .end(function(){
+          closeCard(el, delay, duration);
+        });
+    }
+    
+    function closeCard(el, delay, duration){
+      return move(el)
+        .scale(-1, 1)
+        .set('opacity', 0)
+        .end();
+    }
+    
+    var cells = [];
+    for(var i=0; i<row*col; ++i) cells.push(i);
+    cells = (function(a){
+      // shuffle
+      for(var curIdx in a){
+        var randomIndex = Math.floor(Math.random() * curIdx);
+        var temp = a[randomIndex];
+        a[randomIndex] = a[curIdx];
+        a[curIdx] = temp;
+      }
+      return a;
+    })(cells);
+    
+    for(var i=0; i<row; ++i){
+      var rowHtml = "<div class=\"grid-row\"></div>";
+      var rcont = $(rowHtml), gridCont = $(rowHtml);
+      for(var j=0; j<col; ++j){
+        var position = i+"-"+j;
+        var posToIndex = cells[0];
+        cells.shift();
+        var cell = $("<div class=\"grid-cell game-cell tile-"+position+"\" data-position=\""+position+"\" style=\"opacity: 0 !important;\" data-index=\""+ posToIndex +"\"></div>");
+        cell.append(posToIndex);
+        cell.bind('click', function(){
+          openCardAndClose('.tile-'+$(this).attr('data-position'), 0, 1000);
+          trail.submitAndUpdate($(this).attr('data-index'));
+        });
+        rcont.append(cell);
+        
+        gridCont.append($("<div class=\"grid-cell game-cell\"></div>"));
+      }
+      container.append(rcont);
+      $(".grid-container").append(gridCont);
+    }
+  });
+  </script>
+</body>
+</html>
