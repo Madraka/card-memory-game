@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="utf-8">
-<title>Hello...</title>
+<title>Card Memory Game</title>
 
 <!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -233,10 +233,10 @@
           var cardContent = "<i class=\"fa fa-" + cards[posIndex] + "\"></i>";
           var cell = $("<div class=\"grid-cell game-cell game-cell-x"+ size +" tile-"+position+"\" data-position=\""+position+"\" style=\"opacity: 0 !important;\" data-index=\""+ posIndex +"\"></div>");
           cell.append(cardContent);
-          cell.off('click').on('click', function(e){
-            var el = $(e.target);
-            openCardAndClose('.tile-'+el.attr('data-position'), 0, 1000);
-            game.submitAndUpdate(el.attr('data-index'));
+          cell.off('click').on('click', function(){
+            console.log($(this).attr('data-position'));
+            openCardAndClose('.tile-'+$(this).attr('data-position'), 0, 1000);
+            game.submitAndUpdate($(this).attr('data-index'));
           });
           rcont.append(cell);
           
