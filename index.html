@@ -11,15 +11,18 @@
 <!-- Font-awesome 4.6.3 -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/iCheck/1.0.2/skins/all.css">
+
 <link rel="stylesheet" href="./style.css">
 
 <!-- jQuery 3.1.1 -->
 <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
 
+<!-- iCheck 1.0.2 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/iCheck/1.0.2/icheck.min.js"></script>
+
 <!-- Latest compiled and minified JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
-
 
 </head>
 
@@ -32,6 +35,18 @@
     </div>
     
     <hr>
+    
+    <div class="row" style="margin-bottom: 15px;">
+      <div class="col-md-4 level-select-box">
+        <input type="radio" name="level" value="3" checked> Easy
+      </div>
+      <div class="col-md-4 level-select-box">
+        <input type="radio" name="level" value="4"> Normal
+      </div>
+      <div class="col-md-4 level-select-box">
+        <input type="radio" name="level" value="5"> Hard
+      </div>
+    </div>
   
     <div class="game-container">
       <div class="grid-container"></div>
@@ -48,11 +63,20 @@
   <script src="./move.min.js"></script>
 
   <script>
+  // initialize iCheck
+  $(document).ready(function(){
+    $('input').iCheck({
+      checkboxClass: 'icheckbox_square-blue',
+      radioClass: 'iradio_square-blue',
+      increaseArea: '20%' // optional
+    });
+  });
+  </script>
+  
+  <script>
   $(function(){
     
-    var row=3, col=3, container=$("#game");
-    
-    var trail = {
+    var game = {
       list: [],
       cardList: [],
       renderer: null,
@@ -61,7 +85,8 @@
         this.renderer = $(renderSelector);
         
         this.cardList = cardList;
-        for(var i=0; i<cardList.length; ++i){
+        this.list = [];
+        for(var i=0; i < 9; ++i){
           this.list.push(this.randomNumber());
         }
         this.pivot = this.list.length - 2;
@@ -75,7 +100,7 @@
       },
       
       randomNumber: function(){
-        return Math.floor(Math.random() * this.list.length);
+        return Math.floor(Math.random() * this.cardList.length);
       },
       
       render: function(){
@@ -135,16 +160,19 @@
       }
     };
     
-    function init(){
-      for(var i=0; i<row; ++i){
-        for(var j=0; j<col; ++j){
+    $('input').on('ifChecked', function(event){
+      startGame(this.value, '#game');
+    });
+    
+    function prestart(size){
+      for(var i=0; i<size; ++i){
+        for(var j=0; j<size; ++j){
           var curCard = '.tile-'+i+'-'+j;
           closeCard(curCard, 0, 0);
-          openCardAndClose(curCard, (i*row+j)*300, 500);
+          openCardAndClose(curCard, (i*size+j)*200, 3000 * (size - 2));
         }
       }
     }
-    setTimeout(init, 10);
     
     function openCardAndClose(el, delay, duration){
       return move(el)
@@ -164,51 +192,63 @@
         .end();
     }
     
-    var cells = [
-      'battery-full',
-      'battery-half',
-      'camera',
-      'diamond',
-      'bell',
-      'book',
-      'heart',
-      'bus',
-      'taxi'
-    ];
-    
-    // for(var i=0; i<row*col; ++i) cells.push(i);
-    cells = (function(a){
-      // shuffle
-      for(var curIdx in a){
-        var randomIndex = Math.floor(Math.random() * curIdx);
-        var temp = a[randomIndex];
-        a[randomIndex] = a[curIdx];
-        a[curIdx] = temp;
+    function startGame(size, container) {
+      
+      var gameCont = $(container);
+      var gridCont = $('.grid-container');
+      gameCont.html('');
+      gridCont.html('');
+      
+      var iconsForCard = [
+        'battery-full', 'battery-half', 'camera',
+        'diamond', 'bell', 'book', 'heart',
+        'bus', 'taxi', 'adjust', 'circle-o-notch',
+        'calendar', 'calculator', 'cube', 'futbol-o',
+        'hourglass-half', 'key', 'paint-brush',
+        'paper-plane', 'paper-plane-o', 'paw',
+        'mobile', 'shield', 'ship', 'thumbs-o-up'
+      ];
+      var cards = (function(a, s){
+        // shuffle and cut size
+        for(var curIdx in a){
+          var randomIndex = Math.floor(Math.random() * curIdx);
+          var temp = a[randomIndex];
+          a[randomIndex] = a[curIdx];
+          a[curIdx] = temp;
+        }
+        while(a.length > s) a.shift();
+        return a;
+      })(iconsForCard, size * size);
+      
+      game.init('#trailer', cards).render();
+      setTimeout(function(){
+        prestart(size);
+      }, 100);
+      
+      for(var i=0; i<size; ++i){
+        var rowHtml = "<div class=\"grid-row\"></div>";
+        var rcont = $(rowHtml), gcont = $(rowHtml);
+        for(var j=0; j<size; ++j){
+          var position = i+"-"+j, posIndex = i*size + j;
+          var cardContent = "<i class=\"fa fa-" + cards[posIndex] + "\"></i>";
+          var cell = $("<div class=\"grid-cell game-cell game-cell-x"+ size +" tile-"+position+"\" data-position=\""+position+"\" style=\"opacity: 0 !important;\" data-index=\""+ posIndex +"\"></div>");
+          cell.append(cardContent);
+          cell.off('click').on('click', function(e){
+            var el = $(e.target);
+            openCardAndClose('.tile-'+el.attr('data-position'), 0, 1000);
+            game.submitAndUpdate(el.attr('data-index'));
+          });
+          rcont.append(cell);
+          
+          gcont.append($("<div class=\"grid-cell game-cell game-cell-x"+ size +"\"></div>"));
+        }
+        gameCont.append(rcont);
+        gridCont.append(gcont);
       }
-      return a;
-    })(cells);
-    
-    trail.init('#trailer', cells).render();
-    
-    for(var i=0; i<row; ++i){
-      var rowHtml = "<div class=\"grid-row\"></div>";
-      var rcont = $(rowHtml), gridCont = $(rowHtml);
-      for(var j=0; j<col; ++j){
-        var position = i+"-"+j;
-        var cardContent = "<i class=\"fa fa-" + cells[i*row+j] + "\"></i>";
-        var cell = $("<div class=\"grid-cell game-cell tile-"+position+"\" data-position=\""+position+"\" style=\"opacity: 0 !important;\" data-index=\""+ (i*row+j) +"\"></div>");
-        cell.append(cardContent);
-        cell.bind('click', function(){
-          openCardAndClose('.tile-'+$(this).attr('data-position'), 0, 1000);
-          trail.submitAndUpdate($(this).attr('data-index'));
-        });
-        rcont.append(cell);
-        
-        gridCont.append($("<div class=\"grid-cell game-cell\"></div>"));
-      }
-      container.append(rcont);
-      $(".grid-container").append(gridCont);
     }
+    
+    startGame(3, '#game');
+    
   });
   </script>
 </body>
