@@ -8,8 +8,8 @@
 <!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
-<!-- Optional theme -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+<!-- Font-awesome 4.6.3 -->
+<link rel="stylesheet" href="./font-awesome.min.css">
 
 <link rel="stylesheet" href="./style.css">
 
@@ -19,13 +19,16 @@
 <!-- Latest compiled and minified JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
+
+
 </head>
 
 <body>
   <div class="container page">
-  
+    <br>
+    
     <div class="scores-container">
-      score: <span class="score">0</scpan>
+      score: <span id="gameScore">0</scpan>
     </div>
     
     <hr>
@@ -51,23 +54,28 @@
     
     var trail = {
       list: [],
-      length: 9,
-      range: 9,
-      pivot: 7,
+      cardList: [],
       renderer: null,
       
-      init: function(renderSelector){
+      init: function(renderSelector, cardList){
         this.renderer = $(renderSelector);
-        this.list = [];
-        this.current = this.pivot;
-        for(var i=0; i<this.length; ++i){
+        
+        this.cardList = cardList;
+        for(var i=0; i<cardList.length; ++i){
           this.list.push(this.randomNumber());
         }
+        this.pivot = this.list.length - 2;
+        this.current = this.pivot;
+        
+        // about score
+        this.score = 0;
+        this.countCombo = 0;
+        
         return this;
       },
       
       randomNumber: function(){
-        return Math.floor(Math.random()*this.range);
+        return Math.floor(Math.random() * this.list.length);
       },
       
       render: function(){
@@ -75,9 +83,11 @@
         for(var i in this.list){
           var currentPosition = '';
           if(i == this.current) currentPosition = 'current-cell';
-          result.append('<div class="grid-cell trail-cell '+ currentPosition +'">'+ this.list[i] +'</div>');
+          var cardContent = "<i class=\"fa fa-" + this.cardList[this.list[i]] + "\"></i>";
+          result.append('<div class="grid-cell trail-cell '+ currentPosition +'">'+ cardContent +'</div>');
         }
         this.renderer.html(result);
+        this.updateScore('#gameScore');
       },
       
       isAnswer: function(number){
@@ -102,10 +112,17 @@
       submitAndUpdate: function(number){
         if( this.isAnswer(number) === true ){
           this.goFront();
+          this.score += 50 + (50 * this.countCombo);
+          this.countCombo += 1;
         } else {
+          this.countCombo = 0;
           this.goBack();
         }
         this.render();
+      },
+      
+      updateScore: function(renderTo){
+        $(renderTo).html(this.score);
       },
       
       movePosition: function(offset){
@@ -118,12 +135,12 @@
       }
     };
     
-    trail.init('#trailer').render();
-    
     function init(){
       for(var i=0; i<row; ++i){
         for(var j=0; j<col; ++j){
-          closeCard('.tile-'+i+'-'+j, 0, 0);
+          var curCard = '.tile-'+i+'-'+j;
+          closeCard(curCard, 0, 0);
+          openCardAndClose(curCard, (i*row+j)*300, 500);
         }
       }
     }
@@ -147,8 +164,19 @@
         .end();
     }
     
-    var cells = [];
-    for(var i=0; i<row*col; ++i) cells.push(i);
+    var cells = [
+      'battery-full',
+      'battery-half',
+      'camera',
+      'diamond',
+      'bell',
+      'book',
+      'heart',
+      'bus',
+      'taxi'
+    ];
+    
+    // for(var i=0; i<row*col; ++i) cells.push(i);
     cells = (function(a){
       // shuffle
       for(var curIdx in a){
@@ -160,15 +188,16 @@
       return a;
     })(cells);
     
+    trail.init('#trailer', cells).render();
+    
     for(var i=0; i<row; ++i){
       var rowHtml = "<div class=\"grid-row\"></div>";
       var rcont = $(rowHtml), gridCont = $(rowHtml);
       for(var j=0; j<col; ++j){
         var position = i+"-"+j;
-        var posToIndex = cells[0];
-        cells.shift();
-        var cell = $("<div class=\"grid-cell game-cell tile-"+position+"\" data-position=\""+position+"\" style=\"opacity: 0 !important;\" data-index=\""+ posToIndex +"\"></div>");
-        cell.append(posToIndex);
+        var cardContent = "<i class=\"fa fa-" + cells[i*row+j] + "\"></i>";
+        var cell = $("<div class=\"grid-cell game-cell tile-"+position+"\" data-position=\""+position+"\" style=\"opacity: 0 !important;\" data-index=\""+ (i*row+j) +"\"></div>");
+        cell.append(cardContent);
         cell.bind('click', function(){
           openCardAndClose('.tile-'+$(this).attr('data-position'), 0, 1000);
           trail.submitAndUpdate($(this).attr('data-index'));
