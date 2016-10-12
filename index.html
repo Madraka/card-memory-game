@@ -30,8 +30,13 @@
   <div class="container page">
     <br>
     
-    <div class="scores-container">
+    <div class="row scores-container">
+      <div class="col-xs-6">
         score<br><span id="gameScore">0</scpan>
+      </div>
+      <div class="col-xs-6">
+        best<br><span id="gameBestScore">0</scpan>
+      </div>
     </div>
     
     <hr>
@@ -112,7 +117,7 @@
           result.append('<div class="grid-cell trail-cell '+ currentPosition +'">'+ cardContent +'</div>');
         }
         this.renderer.html(result);
-        this.updateScore('#gameScore');
+        this.updateScore('#gameScore', '#gameBestScore');
       },
       
       isAnswer: function(number){
@@ -146,8 +151,12 @@
         this.render();
       },
       
-      updateScore: function(renderTo){
+      updateScore: function(renderTo, renderBestTo){
         $(renderTo).html(this.score);
+        var bestScore = localStorage.getItem("cmc-best-score") | 0;
+        if(bestScore < this.score) bestScore = this.score;
+        localStorage.setItem("cmc-best-score", bestScore);
+        $(renderBestTo).html(bestScore);
       },
       
       movePosition: function(offset){
