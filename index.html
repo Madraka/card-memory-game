@@ -31,20 +31,20 @@
     <br>
     
     <div class="scores-container">
-      score: <span id="gameScore">0</scpan>
+        score<br><span id="gameScore">0</scpan>
     </div>
     
     <hr>
     
     <div class="row" style="margin-bottom: 15px;">
-      <div class="col-md-4 level-select-box">
+      <div class="col-xs-4 level-select-box">
         <input type="radio" name="level" value="3" checked> Easy
       </div>
-      <div class="col-md-4 level-select-box">
-        <input type="radio" name="level" value="4"> Normal
+      <div class="col-xs-4 level-select-box">
+        <input type="radio" name="level" value="4"> Hard
       </div>
-      <div class="col-md-4 level-select-box">
-        <input type="radio" name="level" value="5"> Hard
+      <div class="col-xs-4 level-select-box">
+        <input type="radio" name="level" value="5"> Hardest
       </div>
     </div>
   
@@ -168,8 +168,7 @@
       for(var i=0; i<size; ++i){
         for(var j=0; j<size; ++j){
           var curCard = '.tile-'+i+'-'+j;
-          closeCard(curCard, 0, 0);
-          openCardAndClose(curCard, (i*size+j)*100, 3000 * (size - 2));
+          openCardAndClose(curCard, (i*size+j)*100, 4000 * (size - 2) + 3000);
         }
       }
     }
